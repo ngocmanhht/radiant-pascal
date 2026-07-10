@@ -1,9 +1,8 @@
 FROM python:3.10-slim
 
-# Install FFmpeg
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends ffmpeg && \
-    rm -rf /var/lib/apt/lists/*
+# Copy pre-compiled static FFmpeg and FFprobe from mwader/static-ffmpeg
+COPY --from=mwader/static-ffmpeg:latest /ffmpeg /usr/local/bin/
+COPY --from=mwader/static-ffmpeg:latest /ffprobe /usr/local/bin/
 
 # Set working directory
 WORKDIR /app
