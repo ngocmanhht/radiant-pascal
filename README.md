@@ -1,61 +1,75 @@
-# Python & FFmpeg Live RTSP Streaming Server (Docker)
+# Multi-Stream RTSP Server with FastAPI and Swagger (Docker)
 
-This project runs a live RTSP stream that reads `.mp4` files from the `input/` directory and streams them continuously in a loop. It is fully containerized using Docker and Docker Compose.
+This project runs a containerized live RTSP stream manager. It allows you to:
+1. **Host Multiple Streams**: Create folder paths under `inputs/` (e.g., `inputs/live`, `inputs/live1`, `inputs/my-stream`). Each folder will automatically stream to `rtsp://<SERVER_IP>:8554/<folder_name>` in an infinite loop.
+2. **Manage Videos via REST API**: Upload, replace, and delete `.mp4` video files in any stream folder dynamically using a Swagger Web UI or direct API requests.
 
-It includes:
-1. **MediaMTX**: A high-performance media server that accepts the RTSP stream and republishes it for clients (supporting RTSP, RTMP, WebRTC, and HLS).
-2. **Python Streamer**: A service that monitors the `input/` folder, creates a playlist, and streams videos via FFmpeg.
+---
+
+## Ports Exposed
+
+- **`8554` (RTSP)**: The port used to pull/view live streams.
+- **`8000` (FastAPI Web API)**: The port used to manage files and view documentation.
 
 ---
 
 ## Quick Start
 
-### 1. Requirements
-Ensure you have [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/) installed on your machine.
-
-### 2. Put Video Files in `input/`
-Put one or more `.mp4` video files into the `input/` folder.
-
-### 3. Run the Server
-Start the containers using Docker Compose:
+### 1. Run the Server
+Build and start the containers using Docker Compose:
 ```bash
 docker compose up --build -d
 ```
 
----
+### 2. Open the Swagger API Documentation
+Open your web browser and navigate to:
+👉 **`http://<SERVER_IP>:8000/docs`**
 
-## Streaming and Playback URLs
-
-Once the server is running, the live stream is accessible at the following URLs:
-
-### 📺 RTSP (Standard Players - VLC, ffmpeg, security cams systems)
-* **URL**: `rtsp://localhost:8554/live`
-* **In VLC**: Go to `File -> Open Network...` and enter the URL above.
-
-### 🌐 WebRTC (Ultra Low Latency Browser Playback)
-* **URL**: [http://localhost:8889/live](http://localhost:8889/live)
-* Open this link in any browser to watch the stream with sub-second latency!
-
-### 📱 HLS (Universal Browser / Mobile Playback)
-* **URL**: `http://localhost:8888/live/index.m3u8`
-* Playable in Safari or any HLS-capable player.
+Here, you can interactively test the endpoints:
+- `GET /streams`: View all active streams, files inside them, and RTSP stream play URLs.
+- `POST /streams/create`: Create a new stream folder (e.g., `live2`).
+- `POST /streams/{stream_name}/upload`: Upload or replace a `.mp4` file for a stream.
+- `DELETE /streams/{stream_name}/files/{filename}`: Delete a video file.
+- `DELETE /streams/{stream_name}`: Delete a stream and all its files.
 
 ---
 
-## Configuration Options
+## How It Works (Multi-Stream Folder Mapping)
 
-You can customize the streaming behavior by editing the environment variables in `docker-compose.yml`:
+The application monitors the `inputs/` directory on your server. Any folder inside it is treated as an active RTSP path:
 
-| Environment Variable | Default Value | Description |
-| :--- | :--- | :--- |
-| `TRANSCODE` | `true` | `true`: Scales and pads all videos to standard 720p (1280x720) so they can be concatenated seamlessly even if resolutions differ. <br>`false`: Direct copies codec data (0% CPU, but all files must have identical resolutions/codecs). |
-| `VIDEO_BITRATE` | `2M` | Video stream bitrate (e.g. `2M` for 2Mbps). |
-| `FPS` | `30` | Frame rate of the live stream. |
+- `./inputs/live/` ➡️ streams to ➡️ `rtsp://<SERVER_IP>:8554/live`
+- `./inputs/live1/` ➡️ streams to ➡️ `rtsp://<SERVER_IP>:8554/live1`
+- `./inputs/custom/` ➡️ streams to ➡️ `rtsp://<SERVER_IP>:8554/custom`
+
+### Rules:
+- **Starting Stream**: Once you add at least one `.mp4` file to a folder, the streaming process begins automatically.
+- **Dynamic Updates**: If you add, delete, or upload a video file via the API, the system automatically regenerates the playlist and restarts that specific stream without affecting other streams.
+- **Transcoding**: By default, videos are scaled/padded to `1280x720` at `30fps` on-the-fly (`TRANSCODE=true`), allowing you to mix videos of different formats and resolutions seamlessly.
 
 ---
 
-## Features
+## API Usage Examples (cURL)
 
-- **Dynamic Playlist Updates**: If you add, delete, or rename files in the `input/` folder, the Python script will automatically detect the changes, update the playlist, and restart the stream.
-- **Continuous Loop**: The playlist loops indefinitely.
-- **Robust Scaling**: When `TRANSCODE=true`, mixed portrait (vertical) and landscape (horizontal) videos are scaled and padded with black bars to maintain the aspect ratio without distorting.
+### 1. List Streams and Files
+```bash
+curl -X GET "http://<SERVER_IP>:8000/streams"
+```
+
+### 2. Create a New Stream Path
+```bash
+curl -X POST "http://<SERVER_IP>:8000/streams/create?stream_name=live2"
+```
+
+### 3. Upload/Replace an MP4 Video File
+```bash
+curl -X POST "http://<SERVER_IP>:8000/streams/live/upload" \
+  -H "accept: application/json" \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@your_video.mp4;type=video/mp4"
+```
+
+### 4. Delete a Video File
+```bash
+curl -X DELETE "http://<SERVER_IP>:8000/streams/live/files/your_video.mp4"
+```

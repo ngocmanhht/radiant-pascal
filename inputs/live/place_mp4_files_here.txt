@@ -1,0 +1,3 @@
+Put your .mp4 files here.
+All videos in this directory will be streamed as a continuous live loop to:
+rtsp://<SERVER_IP>:8554/live

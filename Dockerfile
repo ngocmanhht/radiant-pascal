@@ -7,11 +7,14 @@ COPY --from=mwader/static-ffmpeg:latest /ffprobe /usr/local/bin/
 # Set working directory
 WORKDIR /app
 
-# Copy the stream script
-COPY stream.py /app/stream.py
+# Install Python dependencies for FastAPI API
+RUN pip install --no-cache-dir fastapi uvicorn python-multipart
 
-# Create input folder
-RUN mkdir -p /app/input
+# Copy the application code
+COPY app.py /app/app.py
 
-# Run the stream script
-CMD ["python", "stream.py"]
+# Create base inputs folder
+RUN mkdir -p /app/inputs
+
+# Run Uvicorn web server
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]

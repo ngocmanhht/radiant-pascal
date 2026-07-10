@@ -3,10 +3,7 @@ services:
     image: bluenviron/mediamtx:latest
     container_name: mediamtx
     ports:
-      - "8554:8554" # RTSP
-      - "1935:1935" # RTMP (optional, for streaming to RTMP players)
-      - "2209:8888" # HLS (for viewing in browser via HTTP)
-      - "8889:8889" # WebRTC (low-latency browser viewing)
+      - "8554:8554"   # RTSP (only expose RTSP port as requested)
     restart: unless-stopped
 
   streamer:
@@ -14,13 +11,15 @@ services:
     container_name: python_rtsp_streamer
     depends_on:
       - mediamtx
+    ports:
+      - "8000:8000"   # FastAPI Web API & Swagger UI
     volumes:
-      - ./input:/app/input
+      - ./inputs:/app/inputs
     environment:
-      - INPUT_DIR=/app/input
-      - PLAYLIST_PATH=/app/playlist.txt
-      - RTSP_URL=rtsp://mediamtx:8554/live
+      - INPUTS_DIR=/app/inputs
+      - RTSP_SERVER_URL=rtsp://mediamtx:8554
       - TRANSCODE=true
       - VIDEO_BITRATE=2M
       - FPS=30
+      - HOST_IP=27.71.24.102   # Set your server's public IP to display correct RTSP play links in the API
     restart: unless-stopped
