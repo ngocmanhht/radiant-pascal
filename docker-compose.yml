@@ -12,7 +12,7 @@ services:
     depends_on:
       - mediamtx
     ports:
-      - "8000:8000"   # FastAPI Web API & Swagger UI
+      - "8338:8000"   # FastAPI Web API & Swagger UI (mapped host 8338 -> container 8000)
     volumes:
       - ./inputs:/app/inputs
     environment:
