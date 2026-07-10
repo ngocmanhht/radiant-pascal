@@ -53,7 +53,7 @@ def build_ffmpeg_cmd():
         "-re",                          # Read input at native frame rate (realtime)
         "-f", "concat",                 # Use concat demuxer
         "-safe", "0",                   # Allow absolute/unsafe paths in playlist
-        "-loop", "1",                   # Loop the playlist indefinitely
+        "-stream_loop", "-1",           # Loop the playlist indefinitely
         "-i", PLAYLIST_PATH
     ]
 
