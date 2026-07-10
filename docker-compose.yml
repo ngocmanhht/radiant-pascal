@@ -5,7 +5,7 @@ services:
     ports:
       - "8554:8554"   # RTSP
       - "1935:1935"   # RTMP (optional, for streaming to RTMP players)
-      - "8888:8888"   # HLS (for viewing in browser via HTTP)
+      - "2209:8888"   # HLS (for viewing in browser via HTTP)
       - "8889:8889"   # WebRTC (low-latency browser viewing)
     restart: unless-stopped
 
