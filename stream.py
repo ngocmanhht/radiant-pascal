@@ -132,14 +132,7 @@ def main():
                     # Start streaming
                     cmd = build_ffmpeg_cmd()
                     logging.info(f"Running command: {' '.join(cmd)}")
-                    ffmpeg_process = subprocess.Popen(
-                        cmd,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.STDOUT,
-                        text=True,
-                        bufsize=1,
-                        universal_newlines=True
-                    )
+                    ffmpeg_process = subprocess.Popen(cmd)
                 else:
                     logging.error("Failed to generate playlist. Retrying in 5 seconds...")
                     time.sleep(5)
