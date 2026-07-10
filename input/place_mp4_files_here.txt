@@ -1,0 +1,3 @@
+Place your .mp4 files in this folder.
+The Python streamer will detect them and stream them sequentially in a continuous live loop.
+If you add or remove files, the stream will automatically restart and rebuild the playlist.

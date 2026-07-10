@@ -1,0 +1,26 @@
+services:
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: mediamtx
+    ports:
+      - "8554:8554"   # RTSP
+      - "1935:1935"   # RTMP (optional, for streaming to RTMP players)
+      - "8888:8888"   # HLS (for viewing in browser via HTTP)
+      - "8889:8889"   # WebRTC (low-latency browser viewing)
+    restart: unless-stopped
+
+  streamer:
+    build: .
+    container_name: python_rtsp_streamer
+    depends_on:
+      - mediamtx
+    volumes:
+      - ./input:/app/input
+    environment:
+      - INPUT_DIR=/app/input
+      - PLAYLIST_PATH=/app/playlist.txt
+      - RTSP_URL=rtsp://mediamtx:8554/live
+      - TRANSCODE=true
+      - VIDEO_BITRATE=2M
+      - FPS=30
+    restart: unless-stopped
