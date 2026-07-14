@@ -268,6 +268,15 @@ async def upload_video(stream_name: str, file: UploadFile = File(...)):
     target_path = stream_dir / clean_filename
     
     try:
+        # Delete any existing .mp4 files in this stream directory to guarantee only 1 video exists
+        for existing_file in stream_dir.iterdir():
+            if existing_file.is_file() and existing_file.suffix.lower() == '.mp4':
+                try:
+                    existing_file.unlink()
+                    logger.info(f"Removed old video file '{existing_file.name}' to ensure single-video replacement.")
+                except Exception as ex:
+                    logger.warning(f"Could not delete old video file {existing_file.name}: {ex}")
+
         # Save uploaded file
         with open(target_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
