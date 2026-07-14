@@ -4,8 +4,9 @@ services:
     container_name: mediamtx
     ports:
       - "8554:8554"   # RTSP (only expose RTSP port as requested)
-    volumes:
-      - ./mediamtx.yml:/mediamtx.yml
+    environment:
+      - MTX_RTSPTRANSPORTS=tcp      # Force TCP to prevent UDP handshake latency and packet loss
+      - MTX_WRITEQUEUESIZE=512       # Reduce write queue buffer size for low latency
     restart: unless-stopped
 
   streamer:
