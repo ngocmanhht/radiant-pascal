@@ -4,6 +4,8 @@ services:
     container_name: mediamtx
     ports:
       - "8554:8554"   # RTSP (only expose RTSP port as requested)
+    volumes:
+      - ./mediamtx.yml:/mediamtx.yml
     restart: unless-stopped
 
   streamer:

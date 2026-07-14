@@ -48,6 +48,8 @@ def build_ffmpeg_cmd(playlist_path: Path, rtsp_url: str) -> List[str]:
     cmd = [
         "ffmpeg",
         "-re",                          # Read input at native frame rate (realtime)
+        "-probesize", "32",             # Minimize input probing size for instant startup
+        "-analyzeduration", "0",        # Skip stream analysis duration for instant startup
         "-f", "concat",                 # Use concat demuxer
         "-safe", "0",                   # Allow absolute/unsafe paths
         "-stream_loop", "-1",           # Loop the stream indefinitely
@@ -57,11 +59,16 @@ def build_ffmpeg_cmd(playlist_path: Path, rtsp_url: str) -> List[str]:
     if TRANSCODE:
         cmd.extend([
             "-c:v", "libx264",
-            "-preset", "veryfast",
+            "-preset", "ultrafast",      # Fastest encoding preset (minimum CPU latency)
+            "-tune", "zerolatency",      # Optimize for real-time low-latency streaming
+            "-bf", "0",                  # Disable B-frames to prevent lag/stutter in RTSP
             "-pix_fmt", "yuv420p",
             "-r", FPS,
-            "-g", str(int(FPS) * 2),     # Keyframe interval
+            "-vsync", "cfr",             # Force Constant Frame Rate to prevent stream stuttering
+            "-g", str(int(FPS) * 2),     # Keyframe interval (GOP)
             "-b:v", VIDEO_BITRATE,
+            "-maxrate", VIDEO_BITRATE,
+            "-bufsize", "4M",            # Smooth bitrate spikes to prevent congestion
             # Scale and pad to standard 1280x720 to support mixing different resolutions safely
             "-vf", "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=yuv420p",
             "-c:a", "aac",
@@ -77,6 +84,7 @@ def build_ffmpeg_cmd(playlist_path: Path, rtsp_url: str) -> List[str]:
     cmd.extend([
         "-f", "rtsp",
         "-rtsp_transport", "tcp",
+        "-pkt_size", "1300",             # Prevent RTP packets from exceeding MTU limits (fixes remuxing overhead in mediamtx)
         rtsp_url
     ])
 

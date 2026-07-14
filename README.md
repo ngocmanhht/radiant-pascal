@@ -9,7 +9,7 @@ This project runs a containerized live RTSP stream manager. It allows you to:
 ## Ports Exposed
 
 - **`8554` (RTSP)**: The port used to pull/view live streams.
-- **`8000` (FastAPI Web API)**: The port used to manage files and view documentation.
+- **`8338` (FastAPI Web API)**: The port used to manage files and view documentation.
 
 ---
 
@@ -23,7 +23,7 @@ docker compose up --build -d
 
 ### 2. Open the Swagger API Documentation
 Open your web browser and navigate to:
-👉 **`http://<SERVER_IP>:8000/docs`**
+👉 **`http://<SERVER_IP>:8338/docs`**
 
 Here, you can interactively test the endpoints:
 - `GET /streams`: View all active streams, files inside them, and RTSP stream play URLs.
@@ -53,17 +53,17 @@ The application monitors the `inputs/` directory on your server. Any folder insi
 
 ### 1. List Streams and Files
 ```bash
-curl -X GET "http://<SERVER_IP>:8000/streams"
+curl -X GET "http://<SERVER_IP>:8338/streams"
 ```
 
 ### 2. Create a New Stream Path
 ```bash
-curl -X POST "http://<SERVER_IP>:8000/streams/create?stream_name=live2"
+curl -X POST "http://<SERVER_IP>:8338/streams/create?stream_name=live2"
 ```
 
 ### 3. Upload/Replace an MP4 Video File
 ```bash
-curl -X POST "http://<SERVER_IP>:8000/streams/live/upload" \
+curl -X POST "http://<SERVER_IP>:8338/streams/live/upload" \
   -H "accept: application/json" \
   -H "Content-Type: multipart/form-data" \
   -F "file=@your_video.mp4;type=video/mp4"
@@ -71,5 +71,5 @@ curl -X POST "http://<SERVER_IP>:8000/streams/live/upload" \
 
 ### 4. Delete a Video File
 ```bash
-curl -X DELETE "http://<SERVER_IP>:8000/streams/live/files/your_video.mp4"
+curl -X DELETE "http://<SERVER_IP>:8338/streams/live/files/your_video.mp4"
 ```
