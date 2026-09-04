@@ -3,7 +3,8 @@ services:
     image: bluenviron/mediamtx:latest
     container_name: mediamtx
     ports:
-      - "8554:8554"   # RTSP (only expose RTSP port as requested)
+      - "8554:8554"   # RTSP (RTSP stream port)
+      - "2209:8888"   # HLS (m3u8 HTTP stream port)
     environment:
       - MTX_RTSPTRANSPORTS=tcp      # Force TCP to prevent UDP handshake latency and packet loss
       - MTX_WRITEQUEUESIZE=512       # Reduce write queue buffer size for low latency
@@ -25,4 +26,5 @@ services:
       - VIDEO_BITRATE=2M
       - FPS=30
       - HOST_IP=27.71.24.102   # Set your server's public IP to display correct RTSP play links in the API
+      - HLS_PORT=2209          # HLS port for m3u8 URLs
     restart: unless-stopped

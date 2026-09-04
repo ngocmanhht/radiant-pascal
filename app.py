@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Dict, List
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 
 # Setup logging
 logging.basicConfig(
@@ -25,6 +25,7 @@ TRANSCODE = os.getenv("TRANSCODE", "true").lower() == "true"
 VIDEO_BITRATE = os.getenv("VIDEO_BITRATE", "2M")
 FPS = os.getenv("FPS", "30")
 RTSP_SERVER_URL = os.getenv("RTSP_SERVER_URL", "rtsp://mediamtx:8554")
+HLS_PORT = os.getenv("HLS_PORT", "2209")
 
 # Dictionary to hold active stream processes:
 # { stream_name: { "process": Popen, "files": List[str], "playlist_path": Path } }
@@ -219,6 +220,7 @@ app = FastAPI(
 def list_streams():
     """List all streams, their active state, containing video files, and play URLs."""
     result = {}
+    host_ip = os.getenv('HOST_IP', 'localhost')
     if INPUTS_DIR.exists():
         for d in INPUTS_DIR.iterdir():
             if d.is_dir() and not d.name.startswith('.'):
@@ -228,9 +230,42 @@ def list_streams():
                 result[stream_name] = {
                     "active": is_active,
                     "files": sorted(mp4_files),
-                    "rtsp_url": f"rtsp://{os.getenv('HOST_IP', 'localhost')}:8554/{stream_name}" if is_active else None
+                    "rtsp_url": f"rtsp://{host_ip}:8554/{stream_name}" if is_active else None,
+                    "m3u8_url": f"http://{host_ip}:{HLS_PORT}/{stream_name}/index.m3u8" if is_active else None
                 }
     return result
+
+@app.get("/streams/{stream_name}/m3u8")
+@app.get("/streams/{stream_name}/hls")
+def get_m3u8_link(stream_name: str, redirect: bool = False):
+    """Generate and return the HLS m3u8 stream URL for a given stream name.
+    If redirect=True, directly redirects to the .m3u8 playlist."""
+    clean_name = "".join(c for c in stream_name if c.isalnum() or c in ('-', '_')).strip()
+    stream_dir = INPUTS_DIR / clean_name
+    
+    if not stream_dir.exists() or not stream_dir.is_dir():
+        raise HTTPException(status_code=404, detail=f"Stream folder '{clean_name}' does not exist.")
+        
+    is_active = clean_name in active_streams
+    host_ip = os.getenv("HOST_IP", "localhost")
+    m3u8_url = f"http://{host_ip}:{HLS_PORT}/{clean_name}/index.m3u8"
+    rtsp_url = f"rtsp://{host_ip}:8554/{clean_name}"
+    
+    if not is_active:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Stream '{clean_name}' is not currently active (no video files or stream offline)."
+        )
+        
+    if redirect:
+        return RedirectResponse(url=m3u8_url)
+        
+    return {
+        "stream_name": clean_name,
+        "active": is_active,
+        "m3u8_url": m3u8_url,
+        "rtsp_url": rtsp_url
+    }
 
 @app.post("/streams/create")
 def create_stream(stream_name: str):

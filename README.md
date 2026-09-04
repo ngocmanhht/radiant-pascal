@@ -8,7 +8,8 @@ This project runs a containerized live RTSP stream manager. It allows you to:
 
 ## Ports Exposed
 
-- **`8554` (RTSP)**: The port used to pull/view live streams.
+- **`8554` (RTSP)**: The port used to pull/view RTSP live streams.
+- **`2209` (HLS)**: The HTTP port used to stream `.m3u8` playlists and video segments.
 - **`8338` (FastAPI Web API)**: The port used to manage files and view documentation.
 
 ---
@@ -26,9 +27,10 @@ Open your web browser and navigate to:
 👉 **`http://<SERVER_IP>:8338/docs`**
 
 Here, you can interactively test the endpoints:
-- `GET /streams`: View all active streams, files inside them, and RTSP stream play URLs.
+- `GET /streams`: View all active streams, files inside them, RTSP stream URLs, and HLS `.m3u8` URLs.
+- `GET /streams/{stream_name}/m3u8`: Generate and get the `.m3u8` HLS playback link (supports `?redirect=true` for direct browser/VLC streaming).
 - `POST /streams/create`: Create a new stream folder (e.g., `live2`).
-- `POST /streams/{stream_name}/upload`: Upload or replace a `.mp4` file for a stream.
+- `POST /streams/{stream_name}/upload`: Upload or replace a `.mp4` file for a stream (replaces all existing videos to ensure only 1 video loops).
 - `DELETE /streams/{stream_name}/files/{filename}`: Delete a video file.
 - `DELETE /streams/{stream_name}`: Delete a stream and all its files.
 
