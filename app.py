@@ -49,8 +49,6 @@ def build_ffmpeg_cmd(playlist_path: Path, rtsp_url: str) -> List[str]:
     cmd = [
         "ffmpeg",
         "-re",                          # Read input at native frame rate (realtime)
-        "-probesize", "32",             # Minimize input probing size for instant startup
-        "-analyzeduration", "0",        # Skip stream analysis duration for instant startup
         "-f", "concat",                 # Use concat demuxer
         "-safe", "0",                   # Allow absolute/unsafe paths
         "-stream_loop", "-1",           # Loop the stream indefinitely
@@ -65,7 +63,7 @@ def build_ffmpeg_cmd(playlist_path: Path, rtsp_url: str) -> List[str]:
             "-bf", "0",                  # Disable B-frames to prevent lag/stutter in RTSP
             "-pix_fmt", "yuv420p",
             "-r", FPS,
-            "-vsync", "cfr",             # Force Constant Frame Rate to prevent stream stuttering
+            "-fps_mode", "cfr",          # Force Constant Frame Rate to prevent stream stuttering
             "-g", str(int(FPS) * 2),     # Keyframe interval (GOP)
             "-b:v", VIDEO_BITRATE,
             "-maxrate", VIDEO_BITRATE,
